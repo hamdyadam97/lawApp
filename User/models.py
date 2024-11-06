@@ -49,8 +49,8 @@ class BaseUser(AbstractBaseUser, PermissionsMixin):
             'unique': _("This username already exists."),
         },
     )
-    id_document = models.CharField(max_length=100, unique=True)
-    photo_path = models.CharField(max_length=1080, blank=True, null=True)
+    id_document = models.CharField(max_length=100,null=True,blank=True)
+    photo = models.ImageField(upload_to='image',blank=True,null=True)
     phone = models.CharField(max_length=20, blank=True, null=True)
     address = models.CharField(max_length=200, blank=True, null=True)
     country = models.CharField(max_length=50, blank=True, null=True)
@@ -74,7 +74,7 @@ class BaseUser(AbstractBaseUser, PermissionsMixin):
     )
     is_deactivated = models.BooleanField(default=False)
     date_joined = models.DateTimeField(_('date joined'), default=timezone.now)
-
+    office = models.ForeignKey(Office, on_delete=models.SET_NULL, null=True, related_name='user')
     is_set_password = models.BooleanField(default=True)
 
     objects = UserManager()
@@ -96,7 +96,7 @@ class BaseUser(AbstractBaseUser, PermissionsMixin):
 
 class AdminUser(BaseUser):
     lawfirm = models.CharField(max_length=100, blank=True, null=True)
-    office = models.ForeignKey(Office, on_delete=models.SET_NULL, null=True, related_name='admins')
+
     # legal_documents = models.ManyToManyField('LegalDocument', related_name='admins', blank=True)
 
     class Meta:
@@ -105,7 +105,6 @@ class AdminUser(BaseUser):
 
 
 class Lawyer(BaseUser):
-    office = models.ForeignKey(Office, on_delete=models.SET_NULL, null=True, related_name='lawyers')
     # cases = models.ManyToManyField('Case', related_name='lawyers', blank=True)
     # requests = models.ManyToManyField('Request', related_name='lawyers', blank=True)
     # events = models.ManyToManyField('Event', related_name='lawyers', blank=True)
@@ -117,7 +116,6 @@ class Lawyer(BaseUser):
 
 class User(BaseUser):
     role = models.CharField(max_length=50)
-    office = models.ForeignKey(Office, on_delete=models.SET_NULL, null=True, related_name='user')
     # invoices = models.ManyToManyField('Invoice', related_name='users', blank=True)
     # feedbacks = models.ManyToManyField('Feedback', related_name='users', blank=True)
     # payment_cards = models.ManyToManyField('PaymentCard', related_name='users', blank=True)
