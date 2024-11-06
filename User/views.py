@@ -1,5 +1,6 @@
 from django.shortcuts import render
 from rest_framework import permissions, status, serializers
+from rest_framework.exceptions import NotFound, APIException
 from rest_framework.generics import RetrieveUpdateDestroyAPIView, ListCreateAPIView, CreateAPIView, ListAPIView
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -85,6 +86,14 @@ class UserCreateView(CreateAPIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 # Retrieve, Update, and Delete Users
+
+
+class InvalidUserTypeException(APIException):
+    status_code = status.HTTP_400_BAD_REQUEST
+    default_detail = "Invalid user type specified in URL."
+    default_code = "invalid_user_type"
+
+
 class UserDetailView(RetrieveUpdateDestroyAPIView):
     permission_classes = [permissions.IsAuthenticated, AdminRequiredPermission]
 
@@ -96,7 +105,7 @@ class UserDetailView(RetrieveUpdateDestroyAPIView):
         elif user_type == "client":
             return UserSerializer
         else:
-            raise serializers.ValidationError({"error": "Invalid user type specified in URL."})
+           raise InvalidUserTypeException()
 
     def get_queryset(self):
         # Choose the appropriate queryset based on `user_type` from URL parameters

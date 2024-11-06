@@ -1,46 +1,37 @@
-from django.shortcuts import render
+from rest_framework.exceptions import NotFound
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from rest_framework.views import APIView
 
-# Create your views here.
-
-
-# List and Create Invoices
-class InvoiceListCreateView(ListCreateAPIView):
-    permission_classes = [permissions.IsAuthenticated, AdminRequiredPermission]
-    serializer_class = InvoiceSerializer
-
-    def get_queryset(self):
-        return Invoice.objects.filter(user__office=self.request.user.office)
+from Invoice.models import Invoice
+from Invoice.serializers import InvoiceSerializer
+from User.permission import AdminRequiredPermission
 
 
-# Retrieve, Update, and Delete Invoices
-class InvoiceDetailView(RetrieveUpdateDestroyAPIView):
-    permission_classes = [permissions.IsAuthenticated, AdminRequiredPermission]
-    serializer_class = InvoiceSerializer
+class GetInvoicesView(APIView):
+    permission_classes = [IsAuthenticated,AdminRequiredPermission]
 
-    def get_queryset(self):
-        return Invoice.objects.filter(user__office=self.request.user.office)
+    def get(self, request):
+        # Assuming you have office_id in the User model
+        invoices = Invoice.objects.filter(user__office_id=request.user.office_id)
+        if not invoices:
+            raise NotFound("No invoices found for the office.")
+
+        serializer = InvoiceSerializer(invoices, many=True)
+        return Response(serializer.data)
 
 
+class DeleteInvoiceView(APIView):
+    permission_classes = [IsAuthenticated,AdminRequiredPermission]
 
+    def delete(self, request, invoice_id):
+        # Fetch the invoice by ID, ensuring it belongs to the same office as the logged-in user
+        invoice = Invoice.objects.filter(user__office_id=request.user.office_id, id=invoice_id).first()
 
+        if not invoice:
+            raise NotFound("Invoice not found")
 
-#
-# # List and Create Legal Documents
-# class LegalDocumentListCreateView(ListCreateAPIView):
-#     permission_classes = [permissions.IsAuthenticated, AdminRequiredPermission]
-#     serializer_class = LegalDocumentSerializer
-#
-#     def get_queryset(self):
-#         return LegalDocument.objects.filter(admin=self.request.user)
-#
-#     def perform_create(self, serializer):
-#         serializer.save(admin=self.request.user)
-#
-#
-# # Retrieve, Update, and Delete Legal Documents
-# class LegalDocumentDetailView(RetrieveUpdateDestroyAPIView):
-#     permission_classes = [permissions.IsAuthenticated, AdminRequiredPermission]
-#     serializer_class = LegalDocumentSerializer
-#
-#     def get_queryset(self):
-#         return LegalDocument.objects.filter(admin=self.request.user)
+        # Delete the invoice
+        invoice.delete()
+
+        return Response({"message": "Invoice deleted successfully"}, status=status.HTTP_200_OK)

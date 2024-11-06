@@ -10,7 +10,6 @@ from django.db import models
 from django.contrib.auth.models import PermissionsMixin, UserManager as DjangoUserManager
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from Office.models import Office
 
 
 def validate_username_user(username):
@@ -74,7 +73,7 @@ class BaseUser(AbstractBaseUser, PermissionsMixin):
     )
     is_deactivated = models.BooleanField(default=False)
     date_joined = models.DateTimeField(_('date joined'), default=timezone.now)
-    office = models.ForeignKey(Office, on_delete=models.SET_NULL, null=True, related_name='user')
+    office = models.ForeignKey('Office.Office', on_delete=models.SET_NULL, null=True, related_name='user')
     is_set_password = models.BooleanField(default=True)
 
     objects = UserManager()
@@ -97,7 +96,7 @@ class BaseUser(AbstractBaseUser, PermissionsMixin):
 class AdminUser(BaseUser):
     lawfirm = models.CharField(max_length=100, blank=True, null=True)
 
-    # legal_documents = models.ManyToManyField('LegalDocument', related_name='admins', blank=True)
+    legal_documents = models.ManyToManyField('LegalDocument', related_name='admins', blank=True)
 
     class Meta:
         verbose_name = 'Admin'
@@ -105,9 +104,9 @@ class AdminUser(BaseUser):
 
 
 class Lawyer(BaseUser):
-    # cases = models.ManyToManyField('Case', related_name='lawyers', blank=True)
-    # requests = models.ManyToManyField('Request', related_name='lawyers', blank=True)
-    # events = models.ManyToManyField('Event', related_name='lawyers', blank=True)
+    cases = models.ManyToManyField('Case', related_name='lawyers', blank=True)
+    requests = models.ManyToManyField('Request', related_name='lawyers', blank=True)
+    events = models.ManyToManyField('Event', related_name='lawyers', blank=True)
 
     class Meta:
         verbose_name = 'Lawyer'
@@ -116,12 +115,12 @@ class Lawyer(BaseUser):
 
 class User(BaseUser):
     role = models.CharField(max_length=50)
-    # invoices = models.ManyToManyField('Invoice', related_name='users', blank=True)
-    # feedbacks = models.ManyToManyField('Feedback', related_name='users', blank=True)
-    # payment_cards = models.ManyToManyField('PaymentCard', related_name='users', blank=True)
-    # received_notifications = models.ManyToManyField('Notification', related_name='recipients', blank=True)
-    # sent_notifications = models.ManyToManyField('Notification', related_name='senders', blank=True)
-    # documents = models.ManyToManyField('Document', related_name='uploaders', blank=True)
+    invoices = models.ManyToManyField('Invoice', related_name='users', blank=True)
+    feedbacks = models.ManyToManyField('Feedback', related_name='users', blank=True)
+    payment_cards = models.ManyToManyField('PaymentCard', related_name='users', blank=True)
+    received_notifications = models.ManyToManyField('Notification', related_name='recipients', blank=True)
+    sent_notifications = models.ManyToManyField('Notification', related_name='senders', blank=True)
+    documents = models.ManyToManyField('Document', related_name='uploaders', blank=True)
     # sent_messages = models.ManyToManyField('Message', related_name='senders', blank=True)
     # received_messages = models.ManyToManyField('Message', related_name='recipients', blank=True)
 

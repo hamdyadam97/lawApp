@@ -11,7 +11,7 @@ class RequestSerializer(serializers.ModelSerializer):
             'case_type', 'location', 'notes', 'plaintiff_name', 'defendant_name', 'national_address',
             'document_type', 'judgment_document_path', 'office_id', 'lawyer_id'
         ]
-        read_only_fields = ['id', 'created_at', 'office_id', 'user_id', 'case_id']
+        read_only_fields = ['id', 'created_at']
 
 # Serializer for Case model
 class CaseSerializer(serializers.ModelSerializer):

@@ -1,5 +1,7 @@
 from django.db import models
 
+from User.models import AdminUser
+
 
 # Create your models here.
 
@@ -8,12 +10,6 @@ class Office(models.Model):
     office_name = models.CharField(max_length=100)
     address = models.CharField(max_length=200, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
-
-    # Related fields
-    # Django's ORM automatically creates reverse relations, so we don’t need to define all of them
-    # Here, we only define the ForeignKey fields for relation consistency.
-    # Related_name helps refer to reverse access (for example, admin_set, request_set, etc., in related classes)
-
     def __str__(self):
         return self.office_name
 
@@ -63,10 +59,28 @@ class Request(models.Model):
     national_address = models.CharField(max_length=200, blank=True, null=True)
     document_type = models.CharField(max_length=100, blank=True, null=True)
     judgment_document_path = models.CharField(max_length=200, blank=True, null=True)
-    user = models.ForeignKey('User.User', on_delete=models.CASCADE, related_name="requests")
+    user = models.ForeignKey('User.User', on_delete=models.CASCADE, related_name="requests",null=True,blank=True)
     case = models.ForeignKey(Case, on_delete=models.SET_NULL, related_name="requests", null=True, blank=True)
     office = models.ForeignKey(Office, on_delete=models.SET_NULL, related_name="requests", null=True, blank=True)
     lawyer = models.ForeignKey('User.Lawyer', on_delete=models.SET_NULL, related_name="requests", null=True, blank=True)
 
     def __str__(self):
         return f"Request {self.id} - {self.status}"
+
+class LegalDocument(models.Model):
+        admin = models.ForeignKey(AdminUser, on_delete=models.CASCADE, related_name="legal_documents")
+        title = models.CharField(max_length=100)
+        description = models.CharField(max_length=255)
+        file_path = models.CharField(max_length=200)
+
+        def to_dict(self):
+            return {
+                'id': self.id,
+                'admin_id': self.admin.id,
+                'title': self.title,
+                'description': self.description,
+                'file_path': self.file_path
+            }
+
+        def __str__(self):
+            return self.title
