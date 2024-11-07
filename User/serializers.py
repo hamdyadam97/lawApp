@@ -3,24 +3,38 @@ from rest_framework import serializers
 from rest_framework.exceptions import AuthenticationFailed
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
-from .models import AdminUser, User, Lawyer
-
+from .models import  User
 # Serializer for Admin profile information
-class AdminProfileSerializer(serializers.ModelSerializer):
+class UserProfileSerializer(serializers.ModelSerializer):
     refresh = serializers.CharField(read_only=True, source='token')
     access = serializers.CharField(read_only=True, source='token.access_token')
 
+    def validate(self, attrs):
+        # Extract usertype to check conditions
+        usertype = attrs.get('usertype')
+
+        if usertype == 'lawyer' or usertype == 'admin':
+            # Ensure lawfirm is provided if usertype is 'lawyer' or 'admin'
+            if not attrs.get('lawfirm'):
+                raise serializers.ValidationError({"lawfirm": "This field is required for lawyers and admins."})
+            attrs.pop('role', None)
+
+        elif usertype == 'user':
+            # Ensure role is provided if usertype is 'user'
+            if not attrs.get('role'):
+                raise serializers.ValidationError({"role": "This field is required for users."})
+            attrs.pop('lawfirm', None)
+        return attrs
     def validate_password(self, data):
         validate_password(data)
         return data
 
     def create(self, validated_data):
-        user = AdminUser.objects.create_user(**validated_data)
-
+        user = User.objects.create_user(**validated_data)
         return user
     class Meta:
-        model = AdminUser
-        fields = ['id', 'username', 'email', 'address', 'phone', 'photo', 'lawfirm', 'office',
+        model = User
+        fields = ['id', 'username', 'email', 'address', 'phone', 'photo', 'lawfirm', 'office','role','user_type',
                   'access','refresh','password','id_document','address','country','is_email_verified',
                   'email_verification_code','dob','gender','is_active','is_deactivated','date_joined',
                   ]
@@ -32,6 +46,7 @@ class AdminProfileSerializer(serializers.ModelSerializer):
             'is_deactivated': {'read_only': True},
             'date_joined': {'read_only': True},
             'is_email_verified': {'read_only': True},
+
 
         }
 
@@ -46,14 +61,7 @@ class LoginSerializer(TokenObtainPairSerializer):
 
         # Customize the response data with user information if desired
         user = self.user
-
-        # Check the user type and select the appropriate serializer
-        if isinstance(user, Lawyer):
-            return LawyerSerializer(instance=user, context=self.context).data
-        elif isinstance(user, AdminUser):
-            return AdminProfileSerializer(instance=user, context=self.context).data
-        else:
-            return UserSerializer(instance=user, context=self.context).data
+        return UserSerializer(instance=user, context=self.context).data
 
 
 
@@ -99,12 +107,12 @@ class LawyerSerializer(serializers.ModelSerializer):
         validate_password(data)
 
     def create(self, validated_data):
-        user = Lawyer.objects.create_user(**validated_data)
+        user = User.objects.create_user(**validated_data)
 
         return user
 
     class Meta:
-        model = Lawyer
+        model = User
         fields = ['id', 'username', 'email', 'address', 'phone', 'photo', 'office',
                   'access', 'refresh', 'password', 'id_document', 'address', 'country', 'is_email_verified',
                   'email_verification_code', 'dob', 'gender', 'is_active', 'is_deactivated', 'date_joined',

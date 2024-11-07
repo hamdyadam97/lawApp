@@ -2,8 +2,8 @@ from rest_framework.exceptions import NotFound
 from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView
 from rest_framework.permissions import IsAuthenticated
 
-from Office.models import Request
-from Office.serializers import RequestSerializer
+from Office.models import Request, LegalDocument
+from Office.serializers import RequestSerializer, LegalDocumentSerializer
 
 from User.permission import AdminRequiredPermission
 
@@ -31,3 +31,17 @@ class RequestDetailView(RetrieveUpdateDestroyAPIView):
             return req
         except Request.DoesNotExist:
             raise NotFound("Request not found")
+
+
+
+class LegalDocumentListCreateView(ListCreateAPIView):
+    permission_classes = [IsAuthenticated, AdminRequiredPermission]
+    serializer_class = LegalDocumentSerializer
+
+    def get_queryset(self):
+        # Only retrieve documents belonging to the current admin user
+        return LegalDocument.objects.filter(admin_id=self.request.user.id)
+
+    def perform_create(self, serializer):
+        # Save with the current admin user as the owner
+        serializer.save(admin_id=self.request.user.id)

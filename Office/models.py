@@ -1,6 +1,8 @@
+from idlelib.pyparse import trans
+
 from django.db import models
 
-from User.models import AdminUser
+from User.models import User
 
 
 # Create your models here.
@@ -24,9 +26,9 @@ class Case(models.Model):
     date = models.CharField(max_length=20, blank=True, null=True)
     time = models.CharField(max_length=10, blank=True, null=True)
     notes = models.JSONField(blank=True, null=True)
-    user = models.ForeignKey('User.User', on_delete=models.CASCADE, related_name="cases")
-    lawyer = models.ForeignKey('User.Lawyer', on_delete=models.SET_NULL, related_name="cases", null=True, blank=True)
-    office = models.ForeignKey(Office, on_delete=models.SET_NULL, related_name="cases", null=True, blank=True)
+    user = models.ForeignKey('User.User', on_delete=models.SET_NULL, related_name="cases_user",null=True,blank=True)
+    lawyer = models.ForeignKey('User.User', on_delete=models.SET_NULL, related_name="cases_lawyer", null=True, blank=True)
+    office = models.ForeignKey(Office, on_delete=models.SET_NULL, related_name="cases_office", null=True, blank=True)
 
     def __str__(self):
         return f"Case {self.id} - {self.status}"
@@ -36,10 +38,10 @@ class Document(models.Model):
     filename = models.CharField(max_length=255)
     file_path = models.CharField(max_length=255)
     document_type = models.CharField(max_length=50)
-    uploader = models.ForeignKey('User.User', on_delete=models.CASCADE, related_name="documents")
-    case = models.ForeignKey(Case, on_delete=models.SET_NULL, related_name="documents", null=True, blank=True)
-    request = models.ForeignKey("Request", on_delete=models.SET_NULL, related_name="documents", null=True, blank=True)
-    office = models.ForeignKey(Office, on_delete=models.SET_NULL, related_name="documents", null=True, blank=True)
+    uploader = models.ForeignKey('User.User', on_delete=models.CASCADE, related_name="documents_usser")
+    case = models.ForeignKey(Case, on_delete=models.SET_NULL, related_name="documents_case", null=True, blank=True)
+    request = models.ForeignKey("Request", on_delete=models.SET_NULL, related_name="documents_request", null=True, blank=True)
+    office = models.ForeignKey(Office, on_delete=models.SET_NULL, related_name="documents_office", null=True, blank=True)
     uploaded_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -59,19 +61,20 @@ class Request(models.Model):
     national_address = models.CharField(max_length=200, blank=True, null=True)
     document_type = models.CharField(max_length=100, blank=True, null=True)
     judgment_document_path = models.CharField(max_length=200, blank=True, null=True)
-    user = models.ForeignKey('User.User', on_delete=models.CASCADE, related_name="requests",null=True,blank=True)
-    case = models.ForeignKey(Case, on_delete=models.SET_NULL, related_name="requests", null=True, blank=True)
-    office = models.ForeignKey(Office, on_delete=models.SET_NULL, related_name="requests", null=True, blank=True)
-    lawyer = models.ForeignKey('User.Lawyer', on_delete=models.SET_NULL, related_name="requests", null=True, blank=True)
+    user = models.ForeignKey('User.User', on_delete=models.CASCADE, related_name="requests_user",null=True,blank=True)
+    case = models.ForeignKey(Case, on_delete=models.SET_NULL, related_name="requests_case", null=True, blank=True)
+    office = models.ForeignKey(Office, on_delete=models.SET_NULL, related_name="requests_office", null=True, blank=True)
+    lawyer = models.ForeignKey('User.User', on_delete=models.SET_NULL, related_name="requests_lawyer", null=True, blank=True)
 
     def __str__(self):
         return f"Request {self.id} - {self.status}"
 
 class LegalDocument(models.Model):
-        admin = models.ForeignKey(AdminUser, on_delete=models.CASCADE, related_name="legal_documents")
+        admin = models.ForeignKey(User, on_delete=models.CASCADE, related_name="legal_documents_admin")
         title = models.CharField(max_length=100)
         description = models.CharField(max_length=255)
-        file_path = models.CharField(max_length=200)
+        file = models.FileField(upload_to='legal_documents',null=True)
+        created_at = models.DateTimeField(auto_now_add=True,null=True)
 
         def to_dict(self):
             return {
@@ -79,8 +82,19 @@ class LegalDocument(models.Model):
                 'admin_id': self.admin.id,
                 'title': self.title,
                 'description': self.description,
-                'file_path': self.file_path
+                'file': self.file
             }
 
         def __str__(self):
             return self.title
+
+
+class Event(models.Model):
+    message = models.CharField(max_length=255)
+    date = models.DateField()  # Storing the date separately as a DateField
+    time = models.TimeField()  # Storing the time separately as a TimeField
+ #   lawyer = models.ForeignKey('User.Lawyer', on_delete=models.CASCADE, related_name="events")
+   # user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="events")#
+
+    def __str__(self):
+        return f"Event(id={self.id}, message='{self.message}', date='{self.date}', time='{self.time}')"

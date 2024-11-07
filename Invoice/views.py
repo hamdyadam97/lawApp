@@ -1,3 +1,4 @@
+from rest_framework import status
 from rest_framework.exceptions import NotFound
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -24,9 +25,9 @@ class GetInvoicesView(APIView):
 class DeleteInvoiceView(APIView):
     permission_classes = [IsAuthenticated,AdminRequiredPermission]
 
-    def delete(self, request, invoice_id):
+    def delete(self, request, id):
         # Fetch the invoice by ID, ensuring it belongs to the same office as the logged-in user
-        invoice = Invoice.objects.filter(user__office_id=request.user.office_id, id=invoice_id).first()
+        invoice = Invoice.objects.filter(user__office_id=request.user.office_id, id=id).first()
 
         if not invoice:
             raise NotFound("Invoice not found")
