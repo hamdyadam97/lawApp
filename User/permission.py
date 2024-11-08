@@ -1,5 +1,5 @@
 from rest_framework.permissions import IsAuthenticated
-from User.models import AdminUser
+from User.models import User
 
 
 class AdminRequiredPermission(IsAuthenticated):
@@ -12,9 +12,6 @@ class AdminRequiredPermission(IsAuthenticated):
 
             # Try retrieving the AdminUser instance
             try:
-                admin_user = AdminUser.objects.get(pk=request.user.pk)
-                is_admin = admin_user is not None
-            except AdminUser.DoesNotExist:
-                is_admin = False
-
-            return is_authenticated and is_admin
+                return is_authenticated and request.user.user_type == 'admin'
+            except User.DoesNotExist:
+                return False

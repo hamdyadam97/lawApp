@@ -1,5 +1,7 @@
 import re
 import uuid
+from idlelib.pyparse import trans
+
 from django.utils import timezone
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
@@ -30,12 +32,16 @@ def upload_to_profile_pic(instance, filename):
     return f'uploads/profile/{uuid.uuid4()}/{filename}'
 
 
-class BaseUser(AbstractBaseUser, PermissionsMixin):
+class User(AbstractBaseUser, PermissionsMixin):
     class UserGenderChoices(models.TextChoices):
         MALE = 'male', "Male"
         FEMALE = 'female', "Female"
         PREFERE_NOT_TO_ANSWER = 'prefer_not_to_answer', "Prefere not to answer"
 
+    class UserTypeChoices(models.TextChoices):
+        USER = 'user', "User"
+        ADMIN = 'admin', "Admin"
+        LAWYER = 'lawyer', "Lawyer"
     username_validator = UnicodeUsernameValidator()
 
     username = models.CharField(
@@ -48,6 +54,7 @@ class BaseUser(AbstractBaseUser, PermissionsMixin):
             'unique': _("This username already exists."),
         },
     )
+    user_type = models.CharField(max_length=100,choices=UserTypeChoices.choices,)
     id_document = models.CharField(max_length=100,null=True,blank=True)
     photo = models.ImageField(upload_to='image',blank=True,null=True)
     phone = models.CharField(max_length=20, blank=True, null=True)
@@ -71,11 +78,12 @@ class BaseUser(AbstractBaseUser, PermissionsMixin):
             'Unselect this instead of deleting accounts.'
         ),
     )
+    role = models.CharField(max_length=50,null=True,blank=True)
     is_deactivated = models.BooleanField(default=False)
     date_joined = models.DateTimeField(_('date joined'), default=timezone.now)
     office = models.ForeignKey('Office.Office', on_delete=models.SET_NULL, null=True, related_name='user')
     is_set_password = models.BooleanField(default=True)
-
+    lawfirm = models.CharField(max_length=100, blank=True, null=True)
     objects = UserManager()
     EMAIL_FIELD = 'email'
     USERNAME_FIELD = 'email'
@@ -92,39 +100,4 @@ class BaseUser(AbstractBaseUser, PermissionsMixin):
     @cached_property
     def token(self):
         return RefreshToken.for_user(self)
-
-class AdminUser(BaseUser):
-    lawfirm = models.CharField(max_length=100, blank=True, null=True)
-
-    legal_documents = models.ManyToManyField('LegalDocument', related_name='admins', blank=True)
-
-    class Meta:
-        verbose_name = 'Admin'
-        verbose_name_plural = 'Admins'
-
-
-class Lawyer(BaseUser):
-    cases = models.ManyToManyField('Case', related_name='lawyers', blank=True)
-    requests = models.ManyToManyField('Request', related_name='lawyers', blank=True)
-    events = models.ManyToManyField('Event', related_name='lawyers', blank=True)
-
-    class Meta:
-        verbose_name = 'Lawyer'
-        verbose_name_plural = 'Lawyers'
-
-
-class User(BaseUser):
-    role = models.CharField(max_length=50)
-    invoices = models.ManyToManyField('Invoice', related_name='users', blank=True)
-    feedbacks = models.ManyToManyField('Feedback', related_name='users', blank=True)
-    payment_cards = models.ManyToManyField('PaymentCard', related_name='users', blank=True)
-    received_notifications = models.ManyToManyField('Notification', related_name='recipients', blank=True)
-    sent_notifications = models.ManyToManyField('Notification', related_name='senders', blank=True)
-    documents = models.ManyToManyField('Document', related_name='uploaders', blank=True)
-    # sent_messages = models.ManyToManyField('Message', related_name='senders', blank=True)
-    # received_messages = models.ManyToManyField('Message', related_name='recipients', blank=True)
-
-    class Meta:
-        verbose_name = 'User'
-        verbose_name_plural = 'Users'
 

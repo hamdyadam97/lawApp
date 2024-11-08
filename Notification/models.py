@@ -11,12 +11,10 @@ class Notification(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     is_read = models.BooleanField(default=False)
     notification_type = models.CharField(max_length=50)
-
     sender = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='sent_notifications')
     sender_type = models.CharField(max_length=50, blank=True, null=True)
-    recipient = models.ForeignKey(User, on_delete=models.CASCADE, related_name='received_notifications')
+    recipient = models.ManyToManyField(User, related_name='received_notifications')
     recipient_type = models.CharField(max_length=50)
-
     office = models.ForeignKey(Office, on_delete=models.SET_NULL, null=True, related_name='notifications')
     related_object_type = models.CharField(max_length=50, blank=True, null=True)
     related_object_id = models.IntegerField(blank=True, null=True)

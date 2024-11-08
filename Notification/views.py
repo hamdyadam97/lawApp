@@ -6,7 +6,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from django.shortcuts import get_object_or_404
 
-from User.models import User, Lawyer
+from User.models import User
 from User.permission import AdminRequiredPermission
 from .models import Notification
 from .serializers import NotificationSerializer
@@ -29,7 +29,7 @@ class CreateListNotificationView(ListCreateAPIView):
         if recipient_type == 'user':
             recipient = User.objects.filter(id=recipient_id).first()
         elif recipient_type == 'lawyer':
-            recipient = Lawyer.objects.filter(id=recipient_id).first()
+            recipient = User.objects.filter(id=recipient_id).first()
 
         # Ensure the recipient exists and belongs to the same office as the sender
         if not recipient:

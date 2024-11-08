@@ -40,7 +40,8 @@ INSTALLED_APPS = [
     'drf_yasg',
     'Office',
     'User',
-     'Notification'
+    'Notification',
+     'Invoice'
 ]
 
 MIDDLEWARE = [
@@ -128,12 +129,12 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
 
-AUTH_USER_MODEL = 'User.BaseUser'
+AUTH_USER_MODEL = 'User.User'
 
 
 from datetime import timedelta
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
+    'ACCESS_TOKEN_LIFETIME': timedelta(days=60),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
     'AUTH_HEADER_TYPES': ('Bearer',),
 }
